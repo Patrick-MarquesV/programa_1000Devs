@@ -1,5 +1,7 @@
 package mesttra;
 
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
@@ -8,20 +10,6 @@ public class Menu implements Gerente{
     Scanner input = new Scanner(System.in);
 
     Cliente[] listaCliente = new Cliente[50];
-
-    public String entradaString(){
-
-        String entrada;
-
-        try{
-            return entrada = input.nextLine();
-        } catch(NullPointerException e){
-            System.out.println("Valor inserido não pode ser nulo!");
-            e.printStackTrace();
-        }
-
-        return null;
-    }
 
     public int inicio() {
         System.out.println("==== Menu Principal ====");
@@ -33,7 +21,8 @@ public class Menu implements Gerente{
         System.out.println("5 - Transferir");
         System.out.println("6 - Depositar");
         System.out.println("7 - Relatório de Clientes");
-        System.out.println("8 - Sair");
+        System.out.println("8 - Sacar");
+        System.out.println("9 - Sair");
         System.out.println();
         System.out.println("==========================");
 
@@ -57,8 +46,7 @@ public class Menu implements Gerente{
                 removerCliente();
                 break;
             case 3:
-                verificaCliente();
-                pressEnterToContinue();
+                consultarCliente();
                 break;
             case 4:
                 alterarLimite();
@@ -71,18 +59,38 @@ public class Menu implements Gerente{
                 break;
             case 7:
                 listarClientes();
-                pressEnterToContinue();
                 break;
             case 8:
+                sacar();
+                break;
+            case 9:
                 System.out.println("Obrigado por utilizar nosso sistema!");
                 break;
             default:
                 System.out.println("Opção inserida inválida!");
 
         }
+        pressEnterToContinue();
+        limpaConsole();
+
+
     }
 
-    public double entradaDouble(){
+    private String entradaString(){
+
+        String entrada;
+
+        try{
+            return entrada = input.nextLine();
+        } catch(NullPointerException e){
+            System.out.println("Valor inserido não pode ser nulo!");
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    private double entradaDouble(){
 
         double entrada;
 
@@ -92,13 +100,13 @@ public class Menu implements Gerente{
             return entrada;
         } catch (InputMismatchException e){
             System.out.println("O valor inserido deve ser um número!");
-            e.printStackTrace();
+            input.nextLine();
         }
 
         return 0;
     }
 
-    public int entradaInteiro() {
+    private int entradaInteiro() {
 
         int entrada;
 
@@ -108,21 +116,14 @@ public class Menu implements Gerente{
             return entrada;
         } catch (InputMismatchException e) {
             System.out.println("O valor inserido deve ser um número inteiro!");
-            e.printStackTrace();
+            input.nextLine();
         }
         return 0;
     }
     public void cadastrarCliente() {
 
         System.out.println("===== Cadastro Cliente =====");
-        System.out.println("Selecione uma opção: ");
-        System.out.println("1 - Pessoa Física");
-        System.out.println("2 - Pessoa Jurídica");
-        System.out.println("============================");
-
-        System.out.println();
-        System.out.print("Digite a opção desejada: ");
-        int tipoCliente = entradaInteiro();
+        int tipoCliente = getTipoCliente();
 
         switch (tipoCliente){
             case 1:
@@ -134,8 +135,17 @@ public class Menu implements Gerente{
             default:
                 System.out.println("Valor inserido inválido!");
         }
+    }
 
+    private int getTipoCliente() {
+        System.out.println("Selecione uma opção: ");
+        System.out.println("1 - Pessoa Física");
+        System.out.println("2 - Pessoa Jurídica");
+        System.out.println("============================");
 
+        System.out.println();
+        System.out.print("Digite a opção desejada: ");
+        return entradaInteiro();
     }
 
     public void cadastrarClientePF() {
@@ -172,7 +182,6 @@ public class Menu implements Gerente{
                 break;
             }
         }
-
     }
 
     public void cadastrarClientePJ() {
@@ -188,8 +197,8 @@ public class Menu implements Gerente{
 
         String[] nomeSocio = new String[numeroSocio];
 
-        for(int i = 1; i<=numeroSocio; i++){
-            System.out.print("Digite o nome do sócio n° " + i + " : ");
+        for(int i = 0; i<numeroSocio; i++){
+            System.out.print("Digite o nome do sócio n° " + (i+1) + " : ");
             nomeSocio[i] = entradaString();
         }
 
@@ -208,17 +217,26 @@ public class Menu implements Gerente{
         adicionaClienteLista(new ClientePJ(cnpj, nomeSocio, nomeSocial, nomeFantasia, telefone, limiteChequeEspecial));
 
         System.out.println("Cliente cadastrado com sucesso!");
-
     }
 
     public void removerCliente(){
         System.out.println("==== Remover Cliente ====");
+        int tipoCliente  = getTipoCliente();
+
+        String opcaoCliente;
+
+        if(tipoCliente == 1){
+            opcaoCliente = "PF";
+        } else{
+            opcaoCliente = "PJ";
+        }
+
         System.out.print("Digite o número da conta: ");
         int numeroConta = entradaInteiro();
         boolean clienteRemovido = false;
 
         for(int i= 0; i<listaCliente.length; i++){
-            if(listaCliente[i]!=null && listaCliente[i].getNumeroConta()==numeroConta){
+            if((listaCliente[i] != null) && (listaCliente[i].getNumeroConta() == numeroConta && listaCliente[i].getTipoConta().equalsIgnoreCase(opcaoCliente))){
                 listaCliente[i]=null;
                 System.out.println("Cliente removido com sucesso!");
                 clienteRemovido = true;
@@ -226,100 +244,112 @@ public class Menu implements Gerente{
             }
         }
         if(!clienteRemovido) System.out.println("Cliente não existe!");
-
     }
 
     public void consultarCliente(){
 
         System.out.println("===== Consulta de cliente ====");
-        Cliente cliente = verificaCliente();
+        Cliente cliente = retornaCliente();
 
         if(cliente!=null){
             System.out.println(cliente.toString());
         } else {
             System.out.println("Cliente não existe!");
         }
-
     }
 
-    private Cliente verificaCliente() {
+    private Cliente retornaCliente() {
+        int tipoCliente  = getTipoCliente();
+
+        String opcaoCliente;
+
+        if(tipoCliente == 1){
+            opcaoCliente = "PF";
+        } else{
+            opcaoCliente = "PJ";
+        }
         System.out.print("Digite o número da conta do cliente: ");
         int numeroConta = entradaInteiro();
 
-        if(numeroContaExiste(numeroConta)){
-            return retornaCliente(numeroConta);
+        if(numeroContaExiste(numeroConta, opcaoCliente)){
+            return buscaCliente(numeroConta, opcaoCliente);
         }
         return null;
     }
 
-    public Cliente retornaCliente(int numeroConta){
+    private Cliente buscaCliente(int numeroConta, String tipoCliente){
 
-        for(int i = 0; i<listaCliente.length; i++){
+        for (Cliente cliente : listaCliente) {
 
-            if(listaCliente[i]!=null && listaCliente[i].getNumeroConta() == numeroConta){
-                return listaCliente[i];
+            if (cliente != null && cliente.getNumeroConta() == numeroConta && cliente.getTipoConta().equalsIgnoreCase(tipoCliente)) {
+                return cliente;
             }
 
-            if(i==listaCliente.length-1){
-                System.out.println("Cliente não existe!");
-            }
         }
         return null;
     }
 
-    public boolean numeroContaExiste(int numeroConta){
+    private boolean numeroContaExiste(int numeroConta, String tipoCliente){
 
-        for(int i = 0; i<listaCliente.length; i++){
+        for (Cliente cliente : listaCliente) {
 
-            if(listaCliente[i]!=null && listaCliente[i].getNumeroConta() == numeroConta){
+            if (cliente != null && cliente.getNumeroConta() == numeroConta && cliente.getTipoConta().equalsIgnoreCase(tipoCliente)) {
                 return true;
             }
-
-            if(i==listaCliente.length-1){
-                System.out.println("Cliente não existe!");
-            }
-
         }
         return false;
-
     }
 
     public void alterarLimite(){
         System.out.println("==== Alterar limite cheque especial ====");
-        Cliente cliente = verificaCliente();
-
-        System.out.print("Digite o novo limite de cheque especial: ");
-        double novoLimite = entradaDouble();
-
-        while (novoLimite<0){
-            System.out.println("Insira um valor positivo!");
-            novoLimite = entradaDouble();
-        }
+        Cliente cliente = retornaCliente();
 
         if(cliente != null) {
+            System.out.print("Digite o novo limite de cheque especial: ");
+            double novoLimite = entradaDouble();
+
+            if(cliente.getSaldo()<0 && Math.abs(cliente.getSaldo()) > cliente.getLimiteChequeEspecial()){
+                System.out.println("O valor em uso do cheque especial é superior ao novo limite");
+                cliente = null;
+            }
+
+            while (novoLimite<0){
+                System.out.println("Insira um valor positivo!");
+                System.out.print("Digite o novo limite de cheque especial: ");
+                novoLimite = entradaDouble();
+            }
             cliente.setLimiteChequeEspecial(novoLimite);
             System.out.println("Limite alterado com sucesso!");
         } else {
             System.out.println("Transação cancelada!");
         }
-
     }
 
     public void transferir(){
         System.out.println("==== Transferência ====");
 
-        System.out.print("Conta de origem: ");
-        Cliente origem = verificaCliente();
+        System.out.println("Conta de origem: ");
+        Cliente origem = retornaCliente();
 
-        System.out.print("Conta de destino: ");
-        Cliente destino  = verificaCliente();
-
-        System.out.print("Valor a ser transferido: ");
-        double valorTransferencia = entradaDouble();
+        System.out.println("Conta de destino: ");
+        Cliente destino  = retornaCliente();
 
         boolean contaExiste = origem!=null && destino!=null;
 
-        if(contaExiste && origem.getSaldo() < valorTransferencia){
+        if(contaExiste && ( origem.getNumeroConta() == destino.getNumeroConta()) && origem.getTipoConta().equalsIgnoreCase(destino.getTipoConta())){
+            System.out.println("As contas precisam ser diferentes!");
+            contaExiste = false;
+        }
+
+        double valorTransferencia =0;
+
+        if(contaExiste){
+            System.out.print("Valor a ser transferido: ");
+            valorTransferencia = entradaDouble();
+        }
+
+
+        if(contaExiste && origem.getSaldo() + origem.getLimiteChequeEspecial() < valorTransferencia){
             System.out.println("Saldo insuficiente!");
         } else if(contaExiste){
 
@@ -335,39 +365,66 @@ public class Menu implements Gerente{
 
     public void depositar(){
         System.out.println("==== Deposito ====");
-        Cliente cliente = verificaCliente();
-
-        System.out.print("Valor a ser depositado: ");
-        double valorDeposito = entradaDouble();
+        Cliente cliente = retornaCliente();
 
         if(cliente != null){
+            System.out.print("Valor a ser depositado: ");
+            double valorDeposito = entradaDouble();
+
+            if(valorDeposito<0){
+                System.out.println("Valor inserido inválido!");
+                cliente = null;
+            }
             cliente.setSaldo(cliente.getSaldo() + valorDeposito);
 
             System.out.println("Deposito efetuado!");
         } else {
             System.out.println("Transação cancelada!");
         }
-
     }
 
     public void listarClientes(){
 
         System.out.println("==== Lista de Clientes ====");
 
-        int contador = 1;
+        Arrays.sort(listaCliente, new comparatorTipoNumeroConta());
 
         for(Cliente cliente :
              listaCliente) {
            if(cliente!=null) {
-               System.out.println("Cliente n° " + contador++ + ": ");
+               System.out.println("Cliente " + cliente.getTipoConta() + " " + cliente.numeroConta + ":" );
                System.out.println(cliente.toString());
 
            }
         }
-
-
     }
 
+    public void sacar(){
+        System.out.println("==== Sacar ====");
+
+        System.out.println("Conta do cliente: ");
+        Cliente cliente = retornaCliente();
+
+        boolean contaExiste = cliente!=null;
+
+        double valorSaque=0;
+
+        if(contaExiste) {
+            System.out.print("Valor a ser sacado: ");
+            valorSaque = entradaDouble();
+        }
+
+        if(contaExiste && cliente.getSaldo() + cliente.getLimiteChequeEspecial() < valorSaque){
+            System.out.println("Saldo insuficiente!");
+        } else if(contaExiste){
+
+            cliente.setSaldo(cliente.getSaldo()-valorSaque);
+
+            System.out.println("Saque concluído!");
+        } else {
+            System.out.println("Transação cancelada!");
+        }
+    }
 
     private void pressEnterToContinue(){
         System.out.println("Pressione Enter duas vezes para continuar...");
@@ -378,6 +435,17 @@ public class Menu implements Gerente{
         } catch(Exception e)
         {
             System.out.println("Algo deu errado!");
+        }
+    }
+
+    public static void limpaConsole() {//Limpa a tela no windows, no linux e no MacOS
+        try {
+            if (System.getProperty("os.name").contains("Windows")) //verifica se o SO é windows
+                new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
+            else
+                System.out.print("\033\143"); //Limpa console em MacOS e Linux
+        } catch (IOException | InterruptedException e){
+            System.out.println("Erro ao limpar o console!");    
         }
     }
 

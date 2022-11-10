@@ -1,12 +1,12 @@
 package mesttra;
 
-public class App 
+public class Main
 {
     public static void main( String[] args )
     {
         Menu menu = new Menu();
 
-        while (menu.inicio() !=8);
+        while(menu.inicio() !=9);
 
     }
 }
