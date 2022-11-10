@@ -187,7 +187,6 @@ INSERT INTO itens_compra VALUES
 INSERT INTO itens_compra VALUES
 (1, 3, 7, 1.19); 
 
-
 -- CREATE OR REPLACE FUNCTION fc_historico_valor_produto() RETURNS TRIGGER AS 
 -- $$
 -- BEGIN
@@ -201,3 +200,178 @@ INSERT INTO itens_compra VALUES
 -- CREATE TRIGGER tr_historico_valor_produto
 -- AFTER UPDATE ON produto
 -- FOR EACH ROW EXECUTE PROCEDURE fc_historico_valor_produto();
+
+/*Valor_total venda deve ser gerado automaticamente */ 
+/*Itens_venda deve verificar dar baixa no estoque do produto */ 
+
+CREATE OR REPLACE FUNCTION fc_venda() RETURNS TRIGGER AS
+$$
+BEGIN
+	IF(NEW.quantidade > (SELECT quantidade FROM produto WHERE codigo_p = NEW.codigo_p)) THEN
+		RAISE NOTICE 'QUANTIDADE EM ESTOQUE: % . ESTOQUE MINIMO: %', 
+			(SELECT quantidade FROM produto WHERE codigo_p = NEW.codigo_p), 
+			(SELECT estoque_minimo FROM produto WHERE codigo_p = NEW.codigo_p);
+		RAISE EXCEPTION 'ESTOQUE DE MATERIAL INSUFICIENTE!';
+	ELSE
+
+		NEW.valor_unit := (SELECT valor_unit FROM produto WHERE codigo_p = NEW.codigo_p);
+			
+		UPDATE venda 
+		SET valor_total = valor_total + (NEW.quantidade*NEW.valor_unit) 
+		WHERE codigo_v = NEW.codigo_v;
+
+		RAISE INFO 'Valor da venda atualizado!';
+
+		UPDATE produto
+		SET quantidade = quantidade - NEW.quantidade
+		WHERE codigo_p = NEW.codigo_p;
+
+		RAISE INFO 'Estoque atualizado!';
+
+		RETURN NEW;		
+
+	END IF;
+
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER tr_venda
+BEFORE INSERT ON itens_venda
+FOR EACH ROW EXECUTE PROCEDURE fc_venda();
+
+
+SELECT * FROM itens_venda;
+SELECT * FROM venda;
+SELECT * FROM cliente;
+SELECT * FROM produto ORDER BY codigo_p;
+
+INSERT INTO cliente (nome, endereco, cpf) VALUES
+('Patrick', 'Minha Rua', '424.905.048-35'),
+('Hulgo', 'Rua dele', '123.123.123-12'),
+('Naruto', 'Konoha', '321.123.123-12'),
+('Goku', 'Terra', '000.000.000-00');
+
+INSERT INTO venda (codigo_c, parcelas) VALUES
+(2, 1);
+
+INSERT INTO itens_venda(codigo_v, codigo_p, quantidade) VALUES
+(1, 1, 8);
+INSERT INTO itens_venda(codigo_v, codigo_p, quantidade) VALUES
+(1, 2, 6);
+INSERT INTO itens_venda(codigo_v, codigo_p, quantidade) VALUES
+(1, 3, 30);
+
+/* Ao excluir itens_compra corrigir o valor total*/
+
+CREATE OR REPLACE FUNCTION fc_exclui_item_compra() RETURNS TRIGGER AS
+$$
+BEGIN
+	IF(OLD.quantidade > (SELECT quantidade FROM produto WHERE codigo_p = OLD.codigo_p)) THEN
+		RAISE EXCEPTION 'ITEM DA COMPRA NÃO PODE SER ESTORNADO, NÃO HÁ ITEM O SUFICIENTE EM ESTOQUE';
+	ELSE
+		UPDATE produto SET quantidade = quantidade - OLD.quantidade WHERE codigo_p = OLD.codigo_p;
+
+		UPDATE compra SET valor_total = valor_total - (OLD.quantidade * OLD.valor_unit) WHERE codigo_comp = OLD.codigo_comp;
+		
+		RAISE INFO 'ITEM DE COMPRA ESTORNADO!';
+
+		RETURN OLD;
+		
+	END IF;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER tr_exclui_item_compra
+BEFORE DELETE ON itens_compra
+FOR EACH ROW EXECUTE PROCEDURE fc_exclui_item_compra();
+
+SELECT * FROM compra;
+SELECT * FROM itens_compra;
+SELECT * FROM produto;
+
+-- UPDATE produto SET quantidade = 60 WHERE codigo_p = 2;
+
+DELETE FROM itens_compra	
+WHERE codigo_comp = 1 AND codigo_p=2;
+
+
+/* Ao excluir itens_venda corrigir o valor total*/
+
+CREATE OR REPLACE FUNCTION fc_exclui_item_venda() RETURNS TRIGGER AS
+$$
+BEGIN
+
+	UPDATE venda SET valor_total = valor_total - (OLD.valor_unit*OLD.quantidade) WHERE codigo_v = OLD.codigo_v;
+
+	UPDATE produto SET quantidade = quantidade + OLD.quantidade WHERE codigo_p = OLD.codigo_p;
+
+	RAISE INFO 'PRODUTOS RETORNADOS AO ESTOQUE';
+
+	RETURN NULL;
+
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER tr_exclui_item_venda
+AFTER DELETE ON itens_venda
+FOR EACH ROW EXECUTE PROCEDURE fc_exclui_item_venda();
+
+SELECT * FROM itens_venda;
+SELECT * FROM venda;
+SELECT * FROM produto;
+
+DELETE FROM itens_venda
+WHERE codigo_v = 1 AND codigo_p = 3;
+
+/*   parcelas em vendas devem gerar lançamentos */
+
+CREATE OR REPLACE FUNCTION fc_gera_lancamento() RETURNS TRIGGER AS
+$$
+
+DECLARE
+	num_parcela INTEGER;
+	data_parcela DATE;
+	valor_parcela NUMERIC(15,2);
+BEGIN
+	num_parcela := 1;
+	data_parcela := NEW.data_v;
+	valor_parcela :=(NEW.valor_total/NEW.parcelas);
+
+	IF(NEW.parcelas > 0) THEN
+		DELETE FROM pagamento WHERE codigo_v = NEW.codigo_v;
+		WHILE(NEW.parcelas >= num_parcela) LOOP
+			data_parcela = data_parcela + INTERVAL'1 months';
+
+			INSERT INTO pagamento(codigo_v, nro_parcela, data_venc, valor_parc) VALUES
+			(NEW.codigo_v, num_parcela, data_parcela, valor_parcela);
+
+			num_parcela = num_parcela + 1;
+			
+		END LOOP;
+		RAISE INFO 'PARCELAS GERADAS, VALOR DA PARCELA: R$ %', valor_parcela;
+	END IF;
+	RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER tr_gera_lancamento
+AFTER UPDATE ON venda
+FOR EACH ROW EXECUTE PROCEDURE fc_gera_lancamento();
+
+SELECT * FROM venda;
+SELECT * FROM pagamento;
+
+UPDATE venda SET parcelas = 3 WHERE codigo_v=1;
+
+/* EXPORTAR E IMPORTAR DADOS */
+
+SELECT * FROM cliente;
+
+COPY produto TO '.\tmp\bkp_prouduto.csv' (DELIMITER ';', FORMAT CSV, NULL '',
+										ENCODING 'UTF8', HEADER);
+
+

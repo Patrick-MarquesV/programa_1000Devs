@@ -1,0 +1,31 @@
+SCRUM: 
+	surge em 1986, termo vindo do Hugby
+	transp, inpeção, adaptação
+	baseado no impirismo - tentativa e erro
+	Framework - estrutura, molde
+	Valores comprometimento, foco, abertura, respeito, coragem
+	Possui 3 papeis PO, ScrumMaster, Dev team:
+		PO - gerencia o backlog(lista de afazeres)
+        
+        ScrumMaster - lider servidor, facilita o entendimento da organização e de problemas
+
+        Dev team - 3 a 4 desenvolvedores, 1 UX/UI, 1 QA, Colabora com a construção do produto.
+
+	Eventos:
+		Planejamento Sprint (ciclo) - 1 semana a 1 mes
+			Ferramenta Planning Poker
+				usada para planejamento das tarefas da Sprint, dividinda as tarefas em niveis de dificuldade
+		Reunião diária - 15 minutos para acompanhamento do andamento das atividades da sprint
+						o que fiz ontem? o que vou fazer hj? obstaculos observados?
+		Revisao Sprint - manutençao ao final da sprint, para ajustes para os proximos planejamentos de sprint e criação de novos itens do backlog
+		Retrospectiva Sprint - inspeção do processos e praticas para realização de melhorias e criação de planos para as proximas sprints
+	
+	Artefatos
+		product backlog - lista com os objetivos para conclusao do produto
+
+		sprint backlog - lista das tarefas a serem realizadas na sprint
+
+		Ganho incremental - itens concluidos, soma dos ganhos das sprints
+
+	Ferramentas externas
+		Burndown Chart - grafico com tarafas x tempo, comparando real com esperado(linear)

@@ -1,0 +1,15 @@
+Kanban
+    Sistema ou  metodo criado em 1960, parte da metodologia JIT, criada pela toyota 
+    usa-se de cartoes/post-it
+    flexivel para alteração do backlog
+    muito util a metodologias ageis
+    se baseia no lean e na teoria das filas ou restrições
+
+    6 praticas
+        visualizar fluxo de trabalho
+        limitar o trabalho em progresso
+        gerencie o fluxo
+        deixar as regras do processo mais Colabora
+        implementar rotina de feedback
+        melhorar colaboração
+    
