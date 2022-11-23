@@ -445,7 +445,7 @@ public class Menu implements Gerente{
             else
                 System.out.print("\033\143"); //Limpa console em MacOS e Linux
         } catch (IOException | InterruptedException e){
-            System.out.println("Erro ao limpar o console!");    
+            System.out.println("Erro ao limpar o console!");
         }
     }
 
