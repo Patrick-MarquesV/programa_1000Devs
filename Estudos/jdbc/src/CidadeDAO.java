@@ -1,4 +1,6 @@
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CidadeDAO {
 
@@ -56,8 +58,9 @@ public class CidadeDAO {
         return true;
     }
 
-    public boolean exibeCidades(){
+    public List<Cidade> findCidade(){
         String query = "SELECT * FROM cidades ";
+        List<Cidade> listaCidade = new ArrayList<>();
 
         Statement stmt;
 
@@ -66,25 +69,34 @@ public class CidadeDAO {
             ResultSet rs = stmt.executeQuery(query);
 
             while (rs.next()){
-                System.out.print(rs.getInt("ddd")+"\t");
-                System.out.print(rs.getString("nome")+"\t");
-                System.out.print(rs.getInt("nro_habitantes")+"\t");
-                System.out.print(rs.getDouble("renda_per_capita")+"\t");
-                System.out.print(rs.getBoolean("capital")+"\t");
-                System.out.print(rs.getString("estado")+"\t");
-                System.out.println(rs.getString("nome_prefeito"));
+                Cidade cidade = new Cidade();
 
+                cidade.setDdd(rs.getInt("ddd"));
+                cidade.setNome(rs.getString("nome"));
+                cidade.setNroHabitantes(rs.getInt("nro_habitantes"));
+                cidade.setRendaPerCapita(rs.getDouble("renda_per_capita"));
+                cidade.setCapital(rs.getBoolean("capital"));
+                cidade.setEstado(rs.getString("estado"));
+                cidade.setNomePrefeito(rs.getString("nome_prefeito"));
+
+                listaCidade.add(cidade);
             }
             rs.close();
 
-            return true;
 
         } catch (SQLException e) {
             System.err.println("Erro ao exibir dados da DB");
             System.err.println(e.getMessage());
-            return false;
         }
+        return listaCidade;
+    }
+
+    public List<Cidade> findCidadeByDdd(String ddd){
+        String query = "SELECT * FROM cidades "
+
 
     }
+
+
 
 }

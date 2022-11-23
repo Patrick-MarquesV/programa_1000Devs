@@ -3,8 +3,8 @@ import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class Main {
-
-    static Scanner input = new Scanner(System.in);
+    private static Scanner input = new Scanner(System.in);
+    private static CidadeDAO cidadeDAO = new CidadeDAO();
 
     public static void main(String[] args) throws SQLException {
 
@@ -99,17 +99,11 @@ public class Main {
     }
 
     private static void exibiCidades() {
-        CidadeDAO cidadeDAO = new CidadeDAO();
-
         System.out.println("==== Exibir cidades ====");
-        cidadeDAO.exibeCidades();
-
-
+        cidadeDAO.findCidade();
     }
 
     private static void deletaCidade() {
-        CidadeDAO cidadeDAO = new CidadeDAO();
-
         System.out.println("==== Deletar Cidade ====");
         System.out.print("Digite o DDD da cidade: ");
         int ddd = entradaInt();
@@ -119,8 +113,6 @@ public class Main {
     }
 
     private static void cadastraCidade() {
-
-        CidadeDAO cidadeDAO = new CidadeDAO();
 
         System.out.println("==== Cadastro Cidade ====");
         System.out.println("Digite os dados solicitados abaixo:");

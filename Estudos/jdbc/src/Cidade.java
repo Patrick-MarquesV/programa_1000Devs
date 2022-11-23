@@ -8,6 +8,8 @@ public class Cidade {
     private String estado;
     private String nomePrefeito;
 
+    public Cidade() {}
+
     public Cidade(String nome, long nroHabitantes, double rendaPerCapita, boolean capital, String estado, String nomePrefeito) {
         this.nome = nome;
         this.nroHabitantes = nroHabitantes;
